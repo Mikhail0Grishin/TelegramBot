@@ -1,4 +1,4 @@
-package com.example.telegrambot;
+package com.home.telegrambot.controllers;
 
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
