@@ -114,18 +114,34 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     }
 
     private SendMessage handleSubscribeCommand() {
-        return null;
+        SendMessage message = new SendMessage();
+        message.setText("Подписаться на канал");
+        message.setReplyMarkup(getKeyboard());
+
+        return message;
     }
 
     private SendMessage handleSearchCommand() {
-        return null;
+        SendMessage message = new SendMessage();
+        message.setText("Поиск видео");
+        message.setReplyMarkup(getKeyboard());
+
+        return message;
     }
 
     private SendMessage handleStartCommand() {
-        return null;
+        SendMessage message = new SendMessage();
+        message.setText("Доступные команды: ");
+        message.setReplyMarkup(getKeyboard());
+
+        return message;
     }
 
     private SendMessage handleInfoCommand() {
-        return null;
+        SendMessage message = new SendMessage();
+        message.setText("Это канал для работы с youtube Api");
+        message.setReplyMarkup(getKeyboard());
+
+        return message;
     }
 }
