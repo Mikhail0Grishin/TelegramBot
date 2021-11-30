@@ -7,6 +7,8 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Setter
@@ -80,6 +82,14 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     }
 
     private SendMessage handleNotFoundCommand() {
+        SendMessage message = new SendMessage();
+        message.setText("Что-то пошло не так, выберите команду: ");
+        message.setReplyMarkup(getKeyboard());
+
+        return message;
+    }
+
+    private InlineKeyboardMarkup getKeyboard() {
         return null;
     }
 
