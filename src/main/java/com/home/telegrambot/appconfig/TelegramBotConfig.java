@@ -1,6 +1,6 @@
-package com.home.telegrambot.config;
+package com.home.telegrambot.appconfig;
 
-import com.home.telegrambot.controllers.MyTelegramBot;
+import com.home.telegrambot.MyTelegramBot;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,7 +11,7 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 @Setter
 @Getter
 @Configuration
-@ConfigurationProperties(prefix = "bot")
+@ConfigurationProperties(prefix = "telegrambot")
 public class TelegramBotConfig {
     private String botUserName;
     private String botToken;
