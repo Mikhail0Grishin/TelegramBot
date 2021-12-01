@@ -1,5 +1,14 @@
 package com.home.telegrambot;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.ResourceId;
+import com.google.api.services.youtube.model.SearchListResponse;
+import com.google.api.services.youtube.model.SearchResult;
 import lombok.Setter;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -11,11 +20,21 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Setter
 public class MyTelegramBot extends TelegramLongPollingBot {
+    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+        private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+    // max value for single page is 50
+    private static final short NUMBER_OF_VIDEOS_RETURNED = 1;
+
+    private static YouTube youTube;
+    private static String apiYoutube;
+
     private final String INFO_LABEL = "Помощь";
     private final String SEARCH_LABEL = "Поиск";
     private final String SUBSCRIBE_LABEL = "Подписаться на канал";
@@ -27,13 +46,17 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         super(botOptions);
     }
 
+    public void setApiKey(String apiKey) {
+        apiYoutube = apiKey;
+    }
+
     private enum COMMANDS {
         INFO("/info"),
         START("/start"),
         SEARCH("/search"),
         SUBSCRIBE("/subscribe");
 
-        private String command;
+        private final String command;
 
         COMMANDS(String command){
             this.command = command;
@@ -66,7 +89,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 message.setParseMode(ParseMode.HTML);
                 message.setChatId(chatId);
                 execute(message);
-            } catch (TelegramApiException e) {
+            } catch (TelegramApiException | IOException e) {
                 e.printStackTrace();
                 SendMessage message = handleNotFoundCommand();
                 message.setChatId(chatId);
@@ -78,7 +101,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 message.setParseMode(ParseMode.HTML);
                 message.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
                 execute(message);
-            } catch (TelegramApiException e) {
+            } catch (TelegramApiException | IOException e) {
                 e.printStackTrace();
             }
         }
@@ -127,7 +150,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         return inlineKeyboardMarkup;
     }
 
-    private SendMessage getCommandResponse(String text, User from, String valueOf) {
+    private SendMessage getCommandResponse(String text, User user, String chatId) throws IOException {
         if (text.equals(COMMANDS.INFO.getCommand())){
             return handleInfoCommand();
         }
@@ -155,11 +178,16 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         return message;
     }
 
-    private SendMessage handleSearchCommand() {
+    private SendMessage handleSearchCommand() throws IOException {
         SendMessage message = new SendMessage();
-        message.setText("Поиск видео");
-        message.setReplyMarkup(getKeyboard());
+        SearchListResponse response = search("Programming");
+        List<SearchResult> results = response.getItems();
+        SearchResult singleVideo = results.iterator().next();
+        ResourceId rId = singleVideo.getId();
 
+        if (rId.getKind().equals("youtube#video")) {
+            message.setText("URL = " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + " Title: " + singleVideo.getSnippet().getTitle());
+        }
         return message;
     }
 
@@ -167,7 +195,6 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setText("Доступные команды: ");
         message.setReplyMarkup(getKeyboard());
-
         return message;
     }
 
@@ -177,5 +204,30 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         message.setReplyMarkup(getKeyboard());
 
         return message;
+    }
+
+    private SearchListResponse search(String term) throws IOException {
+        SearchListResponse searchListResponse = null;
+
+        try {
+            youTube = new YouTube.Builder(HTTP_TRANSPORT, JSON_FACTORY, request -> {}).setApplicationName("youtube-cmdline-search-sample").build();
+
+            YouTube.Search.List search = youTube.search().list("id,snippet");
+
+            // TODO: accept term from users
+            String queryTerm = term;
+
+            search.setKey(apiYoutube);
+            search.setQ(queryTerm);
+            search.setType("video");
+            search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url),nextPageToken,pageInfo,prevPageToken");
+            search.setMaxResults((long) NUMBER_OF_VIDEOS_RETURNED);
+
+            searchListResponse = search.execute();
+        } catch (GoogleJsonResponseException e) {
+            e.printStackTrace();
+        }
+
+        return searchListResponse;
     }
 }

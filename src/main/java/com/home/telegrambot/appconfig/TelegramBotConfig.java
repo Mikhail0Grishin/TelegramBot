@@ -15,12 +15,14 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 public class TelegramBotConfig {
     private String botUserName;
     private String botToken;
+    private String apiKey;
 
     @Bean
     public MyTelegramBot MyTelegramBot(){
         MyTelegramBot myTelegramBot = new MyTelegramBot(new DefaultBotOptions());
         myTelegramBot.setBotUserName(botUserName);
         myTelegramBot.setBotToken(botToken);
+        myTelegramBot.setApiKey(apiKey);
 
         return myTelegramBot;
     }
