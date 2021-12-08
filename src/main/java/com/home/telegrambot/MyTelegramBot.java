@@ -11,7 +11,8 @@ import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
 import lombok.Setter;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -22,15 +23,16 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Setter
-public class MyTelegramBot extends TelegramLongPollingBot {
+public class MyTelegramBot extends TelegramWebhookBot {
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
         private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     // max value for single page is 50
-    private static final short NUMBER_OF_VIDEOS_RETURNED = 1;
+    private static final short NUMBER_OF_VIDEOS_RETURNED = 2;
 
     private static YouTube youTube;
     private static String apiYoutube;
@@ -41,6 +43,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
 
     private String botUserName;
     private String botToken;
+    private String webHookPath;
 
     public MyTelegramBot(DefaultBotOptions botOptions){
         super(botOptions);
@@ -48,6 +51,46 @@ public class MyTelegramBot extends TelegramLongPollingBot {
 
     public void setApiKey(String apiKey) {
         apiYoutube = apiKey;
+    }
+
+    @Override
+    public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
+        if(update.getMessage() != null && update.getMessage().hasText()){
+            String chatId = update.getMessage().getChatId().toString();
+            String text = update.getMessage().getText();
+
+            try {
+                SendMessage message = getCommandResponse(text, update.getMessage().getFrom(), chatId);
+                message.enableHtml(true);
+                message.setParseMode(ParseMode.HTML);
+                message.setChatId(chatId);
+                execute(message);
+            } catch (TelegramApiException | IOException e) {
+                e.printStackTrace();
+                SendMessage message = handleNotFoundCommand();
+                message.setChatId(chatId);
+            }
+        } else if (update.hasCallbackQuery()){
+            try {
+                SendMessage message = getCommandResponse(update.getCallbackQuery().getData(), update.getCallbackQuery().getFrom(), String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
+                message.enableHtml(true);
+                message.setParseMode(ParseMode.HTML);
+                message.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
+                execute(message);
+            } catch (TelegramApiException | IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public String getBotPath() {
+        return null;
+    }
+
+    public void setWebHookPath(String webHookPath) {
+        this.webHookPath = webHookPath;
     }
 
     private enum COMMANDS {
@@ -75,36 +118,6 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotToken() {
         return botToken;
-    }
-
-    @Override
-    public void onUpdateReceived(Update update) {
-        if(update.getMessage() != null && update.getMessage().hasText()){
-            String chatId = update.getMessage().getChatId().toString();
-            String text = update.getMessage().getText();
-
-            try {
-                SendMessage message = getCommandResponse(text, update.getMessage().getFrom(), chatId);
-                message.enableHtml(true);
-                message.setParseMode(ParseMode.HTML);
-                message.setChatId(chatId);
-                execute(message);
-            } catch (TelegramApiException | IOException e) {
-                e.printStackTrace();
-                SendMessage message = handleNotFoundCommand();
-                message.setChatId(chatId);
-            }
-        } else if (update.hasCallbackQuery()){
-            try {
-                SendMessage message = getCommandResponse(update.getCallbackQuery().getData(), update.getCallbackQuery().getFrom(), String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
-                message.enableHtml(true);
-                message.setParseMode(ParseMode.HTML);
-                message.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
-                execute(message);
-            } catch (TelegramApiException | IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private SendMessage handleNotFoundCommand() {
@@ -180,14 +193,22 @@ public class MyTelegramBot extends TelegramLongPollingBot {
 
     private SendMessage handleSearchCommand() throws IOException {
         SendMessage message = new SendMessage();
-        SearchListResponse response = search("Programming");
+        SearchListResponse response = search("Animals");
         List<SearchResult> results = response.getItems();
-        SearchResult singleVideo = results.iterator().next();
-        ResourceId rId = singleVideo.getId();
+        Iterator<SearchResult> resultIterator = results.iterator();
+        String result = "";
 
-        if (rId.getKind().equals("youtube#video")) {
-            message.setText("URL = " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + " Title: " + singleVideo.getSnippet().getTitle());
+        while(resultIterator.hasNext()){
+            SearchResult singleVideo = resultIterator.next();
+            ResourceId rId = singleVideo.getId();
+
+            if (rId.getKind().equals("youtube#video")) {
+                result += result + "URL: " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + "Title: " + singleVideo.getSnippet().getTitle() + "\n";
+            }
         }
+
+        message.setText(result);
+
         return message;
     }
 

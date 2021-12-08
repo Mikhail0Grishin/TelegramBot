@@ -13,6 +13,7 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 @Configuration
 @ConfigurationProperties(prefix = "telegrambot")
 public class TelegramBotConfig {
+    private String webHookPath;
     private String botUserName;
     private String botToken;
     private String apiKey;
@@ -23,6 +24,7 @@ public class TelegramBotConfig {
         myTelegramBot.setBotUserName(botUserName);
         myTelegramBot.setBotToken(botToken);
         myTelegramBot.setApiKey(apiKey);
+        myTelegramBot.setWebHookPath(webHookPath);
 
         return myTelegramBot;
     }
