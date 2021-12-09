@@ -29,10 +29,11 @@ import java.util.List;
 @Setter
 public class MyTelegramBot extends TelegramWebhookBot {
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-        private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     // max value for single page is 50
-    private static final short NUMBER_OF_VIDEOS_RETURNED = 2;
+    private static final short NUMBER_OF_VIDEOS_RETURNED = 5;
+    private BotState botState;
 
     private static YouTube youTube;
     private static String apiYoutube;
@@ -47,6 +48,7 @@ public class MyTelegramBot extends TelegramWebhookBot {
 
     public MyTelegramBot(DefaultBotOptions botOptions){
         super(botOptions);
+        botState = BotState.ASK_COMMANDS;
     }
 
     public void setApiKey(String apiKey) {
@@ -60,19 +62,19 @@ public class MyTelegramBot extends TelegramWebhookBot {
             String text = update.getMessage().getText();
 
             try {
-                SendMessage message = getCommandResponse(text, update.getMessage().getFrom(), chatId);
+                SendMessage message = getCommandResponse(text, update.getMessage().getFrom(), chatId, botState);
                 message.enableHtml(true);
                 message.setParseMode(ParseMode.HTML);
                 message.setChatId(chatId);
                 execute(message);
             } catch (TelegramApiException | IOException e) {
-                e.printStackTrace();
-                SendMessage message = handleNotFoundCommand();
+                String exceptionMessage = e.getMessage();
+                SendMessage message = handleNotFoundCommand(exceptionMessage);
                 message.setChatId(chatId);
             }
         } else if (update.hasCallbackQuery()){
             try {
-                SendMessage message = getCommandResponse(update.getCallbackQuery().getData(), update.getCallbackQuery().getFrom(), String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
+                SendMessage message = getCommandResponse(update.getCallbackQuery().getData(), update.getCallbackQuery().getFrom(), String.valueOf(update.getCallbackQuery().getMessage().getChatId()), botState);
                 message.enableHtml(true);
                 message.setParseMode(ParseMode.HTML);
                 message.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
@@ -93,6 +95,10 @@ public class MyTelegramBot extends TelegramWebhookBot {
         this.webHookPath = webHookPath;
     }
 
+    private void setBotState(BotState botState){
+        this.botState = botState;
+    }
+
     private enum COMMANDS {
         INFO("/info"),
         START("/start"),
@@ -110,6 +116,9 @@ public class MyTelegramBot extends TelegramWebhookBot {
         }
     }
 
+    public String getWebHookPath(){
+        return webHookPath;
+    }
     @Override
     public String getBotUsername() {
         return botUserName;
@@ -120,9 +129,9 @@ public class MyTelegramBot extends TelegramWebhookBot {
         return botToken;
     }
 
-    private SendMessage handleNotFoundCommand() {
+    private SendMessage handleNotFoundCommand(String exceptionMessage) {
         SendMessage message = new SendMessage();
-        message.setText("Что-то пошло не так, выберите команду: ");
+        message.setText(exceptionMessage);
         message.setReplyMarkup(getKeyboard());
 
         return message;
@@ -163,24 +172,26 @@ public class MyTelegramBot extends TelegramWebhookBot {
         return inlineKeyboardMarkup;
     }
 
-    private SendMessage getCommandResponse(String text, User user, String chatId) throws IOException {
+    private SendMessage getCommandResponse(String text, User user, String chatId, BotState botState) throws IOException {
         if (text.equals(COMMANDS.INFO.getCommand())){
+            setBotState(BotState.INFO);
             return handleInfoCommand();
         }
 
         if (text.equals(COMMANDS.START.getCommand())){
+            setBotState(BotState.ASK_COMMANDS);
             return handleStartCommand();
         }
 
-        if (text.equals(COMMANDS.SEARCH.getCommand())){
-            return handleSearchCommand();
+        if (text.equals(COMMANDS.SEARCH.getCommand()) || botState.equals(BotState.ASK_KEYWORDS)){
+            return handleSearchCommand(text, user, chatId, botState);
         }
 
         if (text.equals(COMMANDS.SUBSCRIBE.getCommand())){
             return handleSubscribeCommand();
         }
 
-        return handleNotFoundCommand();
+        return handleNotFoundCommand("Что то пошло не так");
     }
 
     private SendMessage handleSubscribeCommand() {
@@ -191,23 +202,30 @@ public class MyTelegramBot extends TelegramWebhookBot {
         return message;
     }
 
-    private SendMessage handleSearchCommand() throws IOException {
+    private SendMessage handleSearchCommand(String textFromMessage, User user, String chatId, BotState botState) throws IOException {
         SendMessage message = new SendMessage();
-        SearchListResponse response = search("Animals");
-        List<SearchResult> results = response.getItems();
-        Iterator<SearchResult> resultIterator = results.iterator();
-        String result = "";
+        String result = "Введите ключевые слова: ";
+        if (botState.equals(BotState.ASK_KEYWORDS)){
+            String keyWords = textFromMessage;
+            SearchListResponse response = search(keyWords);
+            List<SearchResult> results = response.getItems();
+            Iterator<SearchResult> resultIterator = results.iterator();
+            result = "";
 
-        while(resultIterator.hasNext()){
-            SearchResult singleVideo = resultIterator.next();
-            ResourceId rId = singleVideo.getId();
+            System.out.println(response);
+            while(resultIterator.hasNext()){
+                SearchResult singleVideo = resultIterator.next();
+                ResourceId rId = singleVideo.getId();
 
-            if (rId.getKind().equals("youtube#video")) {
-                result += result + "URL: " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + "Title: " + singleVideo.getSnippet().getTitle() + "\n";
+                if (rId.getKind().equals("youtube#video")) {
+                    result += "URL: " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + "Title: " + singleVideo.getSnippet().getTitle() + "\n";
+                }
             }
+            setBotState(BotState.ASK_COMMANDS);
         }
 
         message.setText(result);
+        setBotState(BotState.ASK_KEYWORDS);
 
         return message;
     }
