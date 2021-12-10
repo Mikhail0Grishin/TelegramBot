@@ -1,4 +1,4 @@
-package com.home.telegrambot;
+package com.home.telegrambot.botapi;
 
 public enum BotState {
     ASK_COMMANDS,
@@ -6,5 +6,5 @@ public enum BotState {
     SEARCH,
     SUBSCRIBE,
     HELP,
-    INFO;
+    INFO
 }

@@ -1,6 +1,7 @@
 package com.home.telegrambot.appconfig;
 
 import com.home.telegrambot.MyTelegramBot;
+import com.home.telegrambot.botapi.TelegramFacade;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,12 +20,12 @@ public class TelegramBotConfig {
     private String apiKey;
 
     @Bean
-    public MyTelegramBot MyTelegramBot(){
-        MyTelegramBot myTelegramBot = new MyTelegramBot(new DefaultBotOptions());
+    public MyTelegramBot MyTelegramBot(TelegramFacade telegramFacade) {
+        MyTelegramBot myTelegramBot = new MyTelegramBot(new DefaultBotOptions(), telegramFacade);
         myTelegramBot.setBotUserName(botUserName);
         myTelegramBot.setBotToken(botToken);
-        myTelegramBot.setApiKey(apiKey);
         myTelegramBot.setWebHookPath(webHookPath);
+        myTelegramBot.setYoutubeApi(apiKey);
 
         return myTelegramBot;
     }
