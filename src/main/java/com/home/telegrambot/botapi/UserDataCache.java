@@ -1,6 +1,5 @@
 package com.home.telegrambot.botapi;
 
-import com.home.telegrambot.botapi.BotState;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;

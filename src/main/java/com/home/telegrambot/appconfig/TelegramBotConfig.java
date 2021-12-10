@@ -17,15 +17,12 @@ public class TelegramBotConfig {
     private String webHookPath;
     private String botUserName;
     private String botToken;
-    private String apiKey;
 
     @Bean
     public MyTelegramBot MyTelegramBot(TelegramFacade telegramFacade) {
         MyTelegramBot myTelegramBot = new MyTelegramBot(new DefaultBotOptions(), telegramFacade);
         myTelegramBot.setBotUserName(botUserName);
         myTelegramBot.setBotToken(botToken);
-        myTelegramBot.setWebHookPath(webHookPath);
-        myTelegramBot.setYoutubeApi(apiKey);
 
         return myTelegramBot;
     }

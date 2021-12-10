@@ -34,7 +34,7 @@ public class BotStateContext {
 
     public SendMessage handlerInputMessage(BotState botState, Message message) throws IOException {
         SendMessage replyMessage = new SendMessage();
-        String result = "Что-то пошло не так";
+        StringBuilder result = new StringBuilder("Что-то пошло не так");
 
         long userId = message.getFrom().getId();
         long chatId = message.getChatId();
@@ -44,14 +44,13 @@ public class BotStateContext {
             SearchListResponse response = youTubeContext.search(keyWords);
             List<SearchResult> results = response.getItems();
             Iterator<SearchResult> resultIterator = results.iterator();
-            result = "";
+            result = new StringBuilder();
             System.out.println(response);
             while(resultIterator.hasNext()){
                 SearchResult singleVideo = resultIterator.next();
                 ResourceId rId = singleVideo.getId();
                 if (rId.getKind().equals("youtube#video")) {
-                    result += "URL: " + "https://www.youtube.com/watch?v=" + rId.getVideoId() + "\n" + "Title: " +
-                            singleVideo.getSnippet().getTitle() + "\n";
+                    result.append("URL: " + "https://www.youtube.com/watch?v=").append(rId.getVideoId()).append("\n").append("Title: ").append(singleVideo.getSnippet().getTitle()).append("\n");
                 }
             }
 
@@ -59,19 +58,19 @@ public class BotStateContext {
         }
 
         if(botState.equals(BotState.SEARCH)){
-            result = "Введите ключевые слова: ";
+            result = new StringBuilder("Введите ключевые слова: ");
 
             userDataCache.setUserCurrentState(userId, BotState.ASK_KEYWORDS);
         }
 
         if(botState.equals(BotState.HELP)){
-            result = "Если у вас возникли вопросы, свяжитесь с нами - mihail0910prokopenko@gmail.com";
+            result = new StringBuilder("Если у вас возникли вопросы, свяжитесь с нами - mihail0910prokopenko@gmail.com");
 
             userDataCache.setUserCurrentState(userId, BotState.ASK_COMMANDS);
         }
 
         if(botState.equals(BotState.INFO)){
-            result = "Доступные команды: ";
+            result = new StringBuilder("Доступные команды: ");
             replyMessage.setReplyMarkup(getKeyboard());
 
             userDataCache.setUserCurrentState(userId, BotState.ASK_COMMANDS);
@@ -79,12 +78,12 @@ public class BotStateContext {
         }
 
         if (botState.equals(BotState.ASK_COMMANDS)){
-            result = "Доступные команды: ";
+            result = new StringBuilder("Доступные команды: ");
             replyMessage.setReplyMarkup(getKeyboard());
         }
 
         if(botState.equals(BotState.SUBSCRIBE)){
-            result = "Функция находится в разработке";
+            result = new StringBuilder("Функция находится в разработке");
 
             userDataCache.setUserCurrentState(userId, BotState.ASK_COMMANDS);
             replyMessage.setReplyMarkup(getKeyboard());
@@ -93,7 +92,7 @@ public class BotStateContext {
         replyMessage.enableHtml(true);
         replyMessage.setParseMode(ParseMode.HTML);
         replyMessage.setChatId(String.valueOf(chatId));
-        replyMessage.setText(result);
+        replyMessage.setText(result.toString());
 
         return replyMessage;
     }
