@@ -11,7 +11,7 @@ public class UserDataCache {
     public BotState getUserCurrentState(long userId) {
         BotState botState = usersBotStates.get(userId);
         if (botState == null){
-            botState = BotState.ASK_COMMANDS;
+            botState = BotState.MAIN;
         }
         return botState;
     }

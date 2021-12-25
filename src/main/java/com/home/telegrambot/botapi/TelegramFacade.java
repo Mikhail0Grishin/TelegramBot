@@ -40,16 +40,22 @@ public class TelegramFacade {
 
         switch (msgText){
             case "/start":
-                botState = BotState.ASK_COMMANDS;
+                botState = BotState.MAIN;
                 break;
             case "/search":
-                botState = BotState.SEARCH;
+                botState = BotState.SEARCH_OF_VIDEO;
                 break;
             case "/info":
                 botState = BotState.INFO;
                 break;
             case "/help":
                 botState = BotState.HELP;
+                break;
+            case "/subscribe":
+                botState = BotState.SUBSCRIBE;
+                break;
+            case "/searchChannel":
+                botState = BotState.SEARCH_OF_CHANNEL;
                 break;
             default:
                 botState = userDataCache.getUserCurrentState(userId);
