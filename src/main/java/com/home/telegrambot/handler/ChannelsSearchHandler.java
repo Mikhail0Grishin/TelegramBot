@@ -1,11 +1,11 @@
-package com.home.telegrambot.handlers;
+package com.home.telegrambot.handler;
 
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.SearchResultSnippet;
 import com.home.telegrambot.botapi.BotState;
-import com.home.telegrambot.botapi.UserDataCache;
+import com.home.telegrambot.cache.UserDataCache;
 import com.home.telegrambot.youtubeapi.YouTubeContext;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +35,9 @@ public class ChannelsSearchHandler implements InputMessageHandler {
 
         StringBuilder result = new StringBuilder("Что-то пошло не так");
 
-        long userId = message.getFrom().getId();
         long chatId = message.getChatId();
 
-        BotState botState = userDataCache.getUserCurrentState(userId);
+        BotState botState = userDataCache.getUserCurrentState(chatId);
 
         if(botState.equals(BotState.IN_SEARCH_OF_CHANNEL)){
             String keyWords = message.getText();
@@ -63,13 +62,13 @@ public class ChannelsSearchHandler implements InputMessageHandler {
                 }
             }
 
-            userDataCache.setUserCurrentState(userId, BotState.MAIN);
+            userDataCache.setUserCurrentState(chatId, BotState.MAIN);
         }
 
         if(botState.equals(BotState.SEARCH_OF_CHANNEL)){
             result = new StringBuilder("Введите название канала: ");
 
-            userDataCache.setUserCurrentState(userId, BotState.IN_SEARCH_OF_CHANNEL);
+            userDataCache.setUserCurrentState(chatId, BotState.IN_SEARCH_OF_CHANNEL);
         }
 
         replyMessage.enableHtml(true);

@@ -1,20 +1,14 @@
 package com.home.telegrambot.botapi;
 
-import com.google.api.services.youtube.model.ResourceId;
-import com.google.api.services.youtube.model.SearchListResponse;
-import com.google.api.services.youtube.model.SearchResult;
-import com.google.api.services.youtube.model.SearchResultSnippet;
-import com.home.telegrambot.handlers.InputMessageHandler;
-import com.home.telegrambot.youtubeapi.YouTubeContext;
+import com.home.telegrambot.handler.InputMessageHandler;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +24,10 @@ public class BotStateContext {
 
     public SendMessage handlerInputMessage(BotState botState, Message message) throws IOException {
         InputMessageHandler currentHandler = findHandler(botState);
+
         return currentHandler.handle(message);
     }
+
 
     private InputMessageHandler findHandler(BotState currentBotState) {
         if(isSearchOfVideo(currentBotState)){

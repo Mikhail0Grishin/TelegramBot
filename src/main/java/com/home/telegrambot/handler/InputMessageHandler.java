@@ -1,4 +1,4 @@
-package com.home.telegrambot.handlers;
+package com.home.telegrambot.handler;
 
 import com.home.telegrambot.botapi.BotState;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
