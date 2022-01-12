@@ -53,8 +53,6 @@ public class DefaultHandler implements InputMessageHandler {
             userDataCache.setUserCurrentState(chatId, BotState.MAIN);
         }
 
-        replyMessage.enableHtml(true);
-        replyMessage.setParseMode(ParseMode.HTML);
         replyMessage.setChatId(String.valueOf(chatId));
         replyMessage.setText(result.toString());
 
